@@ -49,7 +49,7 @@ pexpect==4.8.0
 Pillow==9.0.1
 platformdirs==2.5.1
 preshed==3.0.6
-protobuf==3.12.4
+protobuf==3.18.3
 ptyprocess==0.7.0
 pycairo==1.20.1
 pycups==2.0.1
