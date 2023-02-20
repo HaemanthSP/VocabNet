@@ -114,17 +114,19 @@ class Word(object):
     def include_sentence(self, sentence):
         """Include the sentence to the list of evidences for the word."""
 
+        # Calculate sentence selection metrics
         has_PRON = 1 if 'PRON' in sentence.pos_tags else 0
         is_regular = 0 if ((sentence.tokens[0].isalpha() or sentence.tokens[0] in ['"', '“']) and sentence.pos_tags[-1] == 'PUNCT') else 1
 
         # Length penalty
         length = sum(1 for pos in sentence.pos_tags if pos not in ['PART', 'PUNCT', 'SPACE', 'NUM', 'SYM'])
-        a, b, c = 10, 20, 10.0
+        a, b, c = 10, 15, 10.0
         length_err = min(max(a-length, 0, length-b)/c, 1)
 
         # Distance to end
         target_pos = float(sentence.tokens.index(self.text) + 1)
-        position_err = 1 - (target_pos/len(sentence.tokens))
+        # position_err = 1 - (target_pos/len(sentence.tokens))
+        position_err = (target_pos/len(sentence.tokens))
 
         self._sent_errs.append({"length": length_err,
                                "known":0,
@@ -149,7 +151,7 @@ class Word(object):
 
     @staticmethod
     def sent_err(err):
-        return (0.4 * err["length"] + 0.3 * err["known"] + 0.1 * err["position"] + 0.05 * err["anaphora"] + 0.15 * err["punctuation"])
+        return (0.55 * err["length"] + 0.3 * err["known"] + 0.1 * err["position"] + 0.05 * err["anaphora"] + 0.05 * err["punctuation"])
 
     def get_sentences(self, network=None):
         """Return a ranked sentence"""
@@ -162,6 +164,7 @@ class Word(object):
         ranked_sentences = sorted(set((Word.sent_err(y), str(y), x.text) for x, y in zip(self._sentences, self._sent_errs)))
         # ranked_sentences = [x for x,_ in sorted(zip(self._sentences, self._sent_errs), key=lambda pair: Word.sent_err(pair[1]))]
 
+        print("Sentences selected for %s: " % (self.text))
         for score, attrb, sent in ranked_sentences[::-1]:
             print("%s\n%s\t%s\n\n" % (str(attrb), score, sent))
 
@@ -237,6 +240,9 @@ class Vocab:
                 if key not in words:
                     words[key] = Word(token)
                 words[key].include_sentence(curr_sent)
+
+            # Build sentence chain
+            prev_sent = curr_sent
 
         return words
 

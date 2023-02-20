@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import base64
+import urllib
 from rest_framework import status
 from django.shortcuts import render
 from rest_framework.views import APIView
@@ -20,7 +21,7 @@ class PostText(APIView):
                 text = base64.b64decode(json.loads(req.body)['file']['base64'].split(",")[1]).decode('utf8')
             except UnicodeDecodeError:
                 text = base64.b64decode(json.loads(req.body)['file']['base64'].split(",")[1]).decode('windows-1252')
- 
+
         else:
                 text = ""
         username = json.loads(req.body)['user']
@@ -44,6 +45,34 @@ class PostText(APIView):
         return Response(data=data, status=status.HTTP_200_OK)
 
 
+class AddNewBook(APIView):
+    def post(self, req):
+
+        file = urllib.request.urlopen(json.loads(req.body)["text_url"])
+        try:
+            text = file.read().decode('utf8')
+        except UnicodeDecodeError:
+            text = file.read().decode('windows-1252')
+
+        # username = json.loads(req.body)['user']
+        author = json.loads(req.body)['author']
+        book_name = json.loads(req.body)['title']
+        cover_img_url = json.loads(req.body)['cover_image_url']
+
+        book_shelf = Bookshelf.load('Library')
+        book_code = book_shelf.add_book(text, book_name, author, cover_img_url)
+        new_book = Book.load(book_code)
+        learner = Learner("Kavin")
+        learner.add_book(new_book)
+
+        data = {
+                'bookCode': book_code,
+                'stats': new_book.get_stats()}
+        learner.save()
+        book_shelf.save()
+        return Response(data=data, status=status.HTTP_200_OK)
+
+
 class SessionStart(APIView):
     def post(self, req):
         print("-------------------------------------")
@@ -54,7 +83,7 @@ class SessionStart(APIView):
         tutor = learner.get_tutor(book_code)
         session = tutor.get_session()
         print (session.tokens.keys())
-        neighbourhood, neighbourhoodwc = tutor.get_graph_for_viz()
+        neighbourhood, neighbourhoodwc = Book.get_graph_for_viz(book_code=book_code)
         data = {'username': username,
                 'bookCode': book_code,
                 'words': list(session.tokens.keys()),
@@ -70,6 +99,7 @@ class SessionStart(APIView):
 class GetBooks(APIView):
         def post(self, req):
             book_shelf = Bookshelf.load('Library')
+            # data = {"books": book_shelf.get_index()}
             data = book_shelf.get_index()
             return Response(data=data, status=status.HTTP_200_OK)
 
@@ -111,8 +141,8 @@ class PostActivity(APIView):
     def post(self, req):
         username = json.loads(req.body)['username']
         book_code = json.loads(req.body)['bookCode']
-        activity_id = json.loads(req.body)['activityId']['activityId']
-        selection = json.loads(req.body)['selection']
+        activity_id = int(json.loads(req.body)['activityId'])
+        selection = int(json.loads(req.body)['selection'])
         learner = Learner.load(username)
         tutor = learner.get_tutor(book_code)
         session = tutor.get_session()

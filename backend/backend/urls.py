@@ -20,6 +20,7 @@ from algorithms import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/posttext', views.PostText.as_view(), name='post text file'),
+    path('api/v1/addnewbook', views.AddNewBook.as_view(), name='post add book'),
     path('api/v1/getwordlist', views.SessionStart.as_view(), name='get words list'),
     path('api/v1/getactivity', views.GetActivity.as_view(), name='get activity'),
     path('api/v1/postactivity', views.PostActivity.as_view(), name='post activity'),

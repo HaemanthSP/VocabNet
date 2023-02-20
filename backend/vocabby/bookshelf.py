@@ -6,6 +6,8 @@ Module to prepare and maintain book for vocabulary learning.
 import os
 import pickle
 from random import randint
+import sys
+sys.setrecursionlimit(10000)
 
 from vocabby.vocab_builder import Vocab
 
@@ -13,14 +15,17 @@ from vocabby.vocab_builder import Vocab
 class Book:
     """Prepare a book for reading."""
 
-    def __init__(self, text, title, author, gener, year, publisher, code):
+    def __init__(self, text, title, author, cover_img_url, topic, code):
         self.text = text
         self.title = title
         self.author = author
-        self.gener = gener
-        self.year = year
-        self.publisher = publisher
+        self.topic = topic
+        self.cover_img_url = cover_img_url
+        # self.year = year
+        # self.publisher = publisher
         self.code = code
+
+        # Internal
         self.vocab = Vocab(text)
         self.words = self.vocab.words
         self.families = self.vocab.families
@@ -56,7 +61,7 @@ class Book:
         print('Node list:', nodes[:5])
         edges = []
         for source, target, attrb in book.network.edges.data():
-            if attrb['weight'] < 0.7:
+            if attrb['weight'] < 0.6:
                 continue
             edges.append({"source": node_list[source],
                           "target": node_list[target],
@@ -85,6 +90,7 @@ class Book:
 
         neighbourhood = {"nodes": nodes + children, "links": edges + child_edges, "families": families}
         neighbourhoodwc = {"nodes": nodes, "links": edges, "families": families}
+        print("Graph details: nodes: %s, edges: %s, families: %s" % (len(nodes), len(edges), len(families)))
         return neighbourhood, neighbourhoodwc
 
     def save(self):
@@ -100,29 +106,30 @@ class Bookshelf:
         self.name = name
         self.books = {}
 
-    def add_book(self, text, title, author, gener, year, publisher):
+    def add_book(self, text, title, author, cover_img_url, topic="Fiction", year="2000", publisher="ABC"):
         """Add a new book to the shelf."""
         code = self._generate_code(title, author, year)
 
         matching_code = self.find_book(
-                title, author, gener, year, publisher)
+                title, author, topic, year, publisher)
         if matching_code:
             return matching_code
 
         self.books.update(
-                {code: {'title': title,
-                        'author': author,
-                        'gener': gener,
-                        'year': year,
-                        'publisher': publisher}})
-        book = Book(text, title, author, gener, year, publisher, code)
+            {code: {'title': title,
+                    'author': author,
+                    'cover_img_url': cover_img_url,
+                    'gener': topic,
+                    'year': year,
+                    'publisher': publisher}})
+        book = Book(text, title, author, cover_img_url, topic, code)
         book.save()
         return code
 
     def remove_book(self, code):
         # Remove the book from the index
         self.books.pop(code)
-        
+
         # Remove the book file from the storage space
         os.remove('data/books/' + code + '.p')
 

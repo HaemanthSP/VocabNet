@@ -106,7 +106,7 @@ class Tutor(object):
         # n_choice = sorted(candidates, key=lambda x: -x[1])
         # n_choice = sorted(centrality_scores, key=lambda x: -x[1])
 
-        
+
         # Closeness centrality
         # A = nx.adjacency_matrix(self.network).tolil()
         # D = scipy.sparse.csgraph.floyd_warshall(A, directed=False, unweighted=False)
@@ -128,7 +128,7 @@ class Tutor(object):
                 # s = n_shortest_paths / (n - 1)
                 # cc = (n_shortest_paths / total) * s
             # closeness_centrality[node] = cc
-        # 
+        #
         # closeness_centrality = list(closeness_centrality.items())
         # n, v = list(self.network.edges())[0]
         # print("weight", self.network[n][v]['weight'])
@@ -137,7 +137,7 @@ class Tutor(object):
         # print("To nodes from closeness centrality")
         # print(n_choice[:30])
 
-        blacklist = set() 
+        blacklist = set()
         whitelist = []
         for node, _ in n_choice:
             # print("Prevented %s" % (node))
@@ -147,10 +147,10 @@ class Tutor(object):
                 if len(whitelist) >= 20:
                     break
 
-                
+
         return whitelist
 
-                
+
     def get_session(self):
         """Returns a active/incomplete session or a new session."""
         if not(self.sessions and len(self.sessions[-1].queue)):
@@ -175,7 +175,7 @@ class Tutor(object):
         edges = []
         linkNodes = []
         for idx, (source, target, attrb) in enumerate(self.network.edges.data(), len(nodes)):
-            if attrb['weight'] < 0.6:
+            if attrb['weight'] < 0.65:
                 continue
             edges.extend([{"source": node_list[source],
                           "target": idx,
@@ -213,6 +213,13 @@ class Tutor(object):
 
         neighbourhood = {"nodes": nodes + children + linkNodes, "links": edges + child_edges, "families": families}
         neighbourhoodwc = {"nodes": nodes + linkNodes, "links": edges, "families": families}
+        # print("graph keys", neighbourhoodwc)
+        print("Graph details: nodes: %s, edges: %s, families: %s" % (len(nodes), len(edges), len(families)))
+        print("Nodes: %s" % (nodes[100:104]))
+        print("Edges: %s" % (edges[100:104]))
+        print("Sample: %s --> %s (%s)" % (nodes[edges[100]["source"]], nodes[edges[101]["target"]], edges[100]["weight"]))
+        # print("Sample: %s --> %s (%s)" % (nodes[edges[11]["source"]], nodes[edges[11]["target"]], edges[11]["weight"]))
+        print("Sample: %s --> %s (%s)" % (nodes[edges[102]["source"]], nodes[edges[103]["target"]], edges[103]["weight"]))
         return neighbourhood, neighbourhoodwc
 
 
@@ -235,7 +242,7 @@ class Session(object):
                 s.replace(word.text, '______') for s in word.get_sentences())
             # random.shuffle(all_sentences)
             sentences = all_sentences[:3]
-        
+
             distractor_objs = self._get_distractors(family, word.pos) + [word]
             np.random.shuffle(distractor_objs)
             distractors = [d.text for d in distractor_objs]
@@ -319,10 +326,11 @@ class Session(object):
 
     def _activity_selector(self, word):
         # TODO: Improve activity selection based on student progress
-        if len(word) >= 5:
-            return 0
-        else:
-            return random.choice([0, 1])
+        # if len(word) >= 5:
+            # return 0
+        # else:
+            # return random.choice([0, 1])
+        return 0
 
     def next_acitivity(self):
         if self.activity_cache:
@@ -356,8 +364,7 @@ class Session(object):
         if not is_correct:
             feedback_sentence = ''
             if activity_type == 0:
-                wrong_word = self.answers[
-                        activity_id]['distractors'][selection]
+                wrong_word = self.answers[activity_id]['distractors'][selection]
                 # feedback_sentence = random.choice(wrong_word.get_sentences())
                 feedback_sentence = wrong_word.get_sentences()[0]
             result.update({'feedback': feedback_sentence})
